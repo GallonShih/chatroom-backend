@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test coverage and pytest
+.coverage
+.cache
+.tox
+.nox
+.pytest_cache/
+htmlcov/
+
+# Logs and local databases
+*.log
+*.sqlite3
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints

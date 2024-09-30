@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: chatroom-backend
+    image: chatroom-backend:test  # Use the built image
+    build:
+      context: .  # If the image doesn't exist, build it using Dockerfile
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/app  # Mount the current directory to /app inside the container
+    command: tail -f /dev/null  # Override the default command to keep the container running
+    ports:
+      - "8000:8000"  # Map port 8000 of the container to port 8000 on the host
+    depends_on:
+      - postgres  # Ensure PostgreSQL starts before app
+    env_file:  # Reference the .env file
+      - .env
+
+  postgres:
+    container_name: chatroom-postgres
+    image: postgres:16  # Use PostgreSQL 16 image
+    environment:
+      POSTGRES_USER: postgres  # Change this to your preferred user
+      POSTGRES_PASSWORD: postgres  # Change this to your preferred password
+    ports:
+      - "5432:5432"  # Map port 5432 to access PostgreSQL
+
+  pgadmin:
+    container_name: chatroom-pgadmin
+    image: dpage/pgadmin4  # Use pgAdmin 4 image
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com  # Default email for pgAdmin login
+      PGADMIN_DEFAULT_PASSWORD: admin  # Default password for pgAdmin login
+    ports:
+      - "5050:80"  # Map port 5050 to access pgAdmin
+    depends_on:
+      - postgres
