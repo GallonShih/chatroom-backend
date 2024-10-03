@@ -16,6 +16,7 @@ services:
       - postgres  # Ensure PostgreSQL starts before app
     env_file:  # Reference the .env file
       - .env
+    network_mode: "host"  # Enable host networking for Kafka
 
   postgres:
     container_name: chatroom-postgres

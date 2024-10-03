@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
-from routers.v1 import default, user
+from routers.v1 import default, user, chat, websocket
 from db.init_db import init_db
 from utils.logger import logger
 
@@ -49,6 +49,8 @@ app.add_middleware(
 # Include router with prefix
 app.include_router(default.router, prefix=API_PREFIX_V1)
 app.include_router(user.router, prefix=API_PREFIX_V1, tags=["User"])
+app.include_router(chat.router, prefix=API_PREFIX_V1, tags=["Chat"])
+app.include_router(websocket.router, prefix=API_PREFIX_V1, tags=["WebSocket"])
 
 # Redirect root to Swagger documentation
 @app.get("/", include_in_schema=False)
