@@ -1,3 +1,4 @@
+import uuid
 import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -37,8 +38,11 @@ async def websocket_endpoint(
     await websocket.accept()
     logger.info(f"WebSocket connection established for user {username}")
 
-    # Create Kafka consumer for chatroom_topic using username as group_id
-    consumer = create_kafka_consumer(username)
+    # Generate a unique group_id for each connection
+    group_id = f"{username}-{uuid.uuid4()}"
+    
+    # Create Kafka consumer for chatroom_topic using unique group_id
+    consumer = create_kafka_consumer(group_id)
 
     # Create async queue
     message_queue = asyncio.Queue()

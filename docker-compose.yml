@@ -37,3 +37,17 @@ services:
       - "5050:80"  # Map port 5050 to access pgAdmin
     depends_on:
       - postgres
+
+  # ccadvisor:
+  #   container_name: chatroom-ccadvisor
+  #   image: gcr.io/cadvisor/cadvisor:v0.47.1
+  #   privileged: true
+  #   platform: linux/aarch64
+  #   volumes:
+  #     - /var/run:/var/run:ro
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   ports:
+  #     - 8080:8080
+  #   restart: always
