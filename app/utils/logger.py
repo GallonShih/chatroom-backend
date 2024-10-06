@@ -16,7 +16,7 @@ if not logger.handlers:
 
     # Define a log format with thread, file, and function information
     formatter = logging.Formatter(
-        fmt="%(asctime)s - %(name)s - %(levelname)s - [%(threadName)s] - %(filename)s - %(funcName)s - %(message)s",
+        fmt="%(asctime)s - %(name)s - %(levelname)s - [%(process)d/%(thread)d] - %(threadName)s - %(filename)s - %(funcName)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 

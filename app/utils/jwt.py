@@ -25,5 +25,5 @@ def verify_access_token(token: str):
         return payload  # Return the payload if valid
     except jwt.ExpiredSignatureError:
         raise Exception("Token expired")
-    except jwt.JWTError:
+    except:
         raise Exception("Invalid token")
