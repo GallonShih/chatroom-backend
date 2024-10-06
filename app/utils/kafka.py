@@ -1,6 +1,8 @@
 import os
 import json
+from aiokafka import AIOKafkaConsumer
 from confluent_kafka import Producer, Consumer
+import asyncio
 from utils.logger import logger
 
 
@@ -17,10 +19,8 @@ KAFKA_PRODUCER_CONFIG = {
 
 # Kafka consumer configuration
 KAFKA_CONSUMER_CONFIG = {
-    'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
-    'auto.offset.reset': 'latest',
-    'enable.auto.commit': True,
-    'auto.commit.interval.ms': 5000
+    'bootstrap_servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
+    'auto_offset_reset': 'latest',
 }
 
 # Kafka topic
@@ -44,10 +44,20 @@ def send_to_kafka(topic: str, message: dict):
     except Exception as e:
         logger.error(f"Failed to send message to Kafka: {e}")
 
-def create_kafka_consumer(group_id: str):
-    consumer_config = KAFKA_CONSUMER_CONFIG.copy()
-    consumer_config['group.id'] = group_id
-    consumer = Consumer(consumer_config)
-    consumer.subscribe([KAFKA_TOPIC])
-    logger.info(f"Kafka consumer created with group_id '{group_id}' subscribed to topic '{KAFKA_TOPIC}'")
+# def create_kafka_consumer(group_id: str):
+#     consumer_config = KAFKA_CONSUMER_CONFIG.copy()
+#     consumer_config['group.id'] = group_id
+#     consumer = Consumer(consumer_config)
+#     consumer.subscribe([KAFKA_TOPIC])
+#     logger.info(f"Kafka consumer created with group_id '{group_id}' subscribed to topic '{KAFKA_TOPIC}'")
+#     return consumer
+
+async def create_aiokafka_consumer(group_id: str):
+    consumer = AIOKafkaConsumer(
+        KAFKA_TOPIC,
+        group_id=group_id,
+        **KAFKA_CONSUMER_CONFIG
+    )
+    await consumer.start()
+    logger.info(f"AIOKafka consumer created with group_id '{group_id}' subscribed to topic '{KAFKA_TOPIC}'")
     return consumer

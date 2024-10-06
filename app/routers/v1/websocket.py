@@ -7,7 +7,8 @@ from confluent_kafka import KafkaException, KafkaError
 from db.database import SessionLocal
 from db.models import User
 from utils.logger import logger
-from utils.kafka import create_kafka_consumer
+# from utils.kafka import create_kafka_consumer
+from utils.kafka import create_aiokafka_consumer
 
 import json
 
@@ -41,27 +42,15 @@ async def websocket_endpoint(
     # Generate a unique group_id for each connection
     group_id = f"{username}-{uuid.uuid4()}"
     
-    # Create Kafka consumer for chatroom_topic using unique group_id
-    consumer = create_kafka_consumer(group_id)
-
-    # Create async queue
-    message_queue = asyncio.Queue()
-
-    # Start Kafka consumer task
-    consumer_task = asyncio.create_task(kafka_consumer_task(consumer, message_queue))
+    # Create AIOKafka consumer for chatroom_topic using unique group_id
+    consumer = await create_aiokafka_consumer(group_id)
 
     last_read_id = None  # Track the last message ID received
 
     try:
-        while True:
-            # Get message from queue
-            message = await message_queue.get()
-
-            # If message id None, stop the task
-            if message is None:
-                break
-
-            # Parse message from Kafka
+        async for msg in consumer:
+            # Decode Kafka message
+            message = msg.value.decode('utf-8')
             message_data = json.loads(message)
             last_read_id = message_data.get("chat_id")
             logger.info(f"Message data: {message_data}")
@@ -87,52 +76,45 @@ async def websocket_endpoint(
         logger.error(f"Unexpected error in WebSocket: {e}")
 
     finally:
-        # Cancel the Kafka consumer task
-        consumer_task.cancel()
-        try:
-            await consumer_task
-        except asyncio.CancelledError:
-            logger.info(f"Kafka consumer task cancelled for user {username}")
-        
         # Close Kafka consumer on disconnect or error
-        consumer.close()
+        await consumer.stop()
 
-async def kafka_consumer_task(consumer, message_queue: asyncio.Queue):
-    """
-    An asynchronous task to consume messages from Kafka.
+# async def kafka_consumer_task(consumer, message_queue: asyncio.Queue):
+#     """
+#     An asynchronous task to consume messages from Kafka.
     
-    Args:
-        consumer: The Kafka consumer instance.
-        message_queue (asyncio.Queue): The queue to store consumed messages.
-    """
-    try:
-        while True:
-            # Poll messages from Kafka with a short timeout
-            msg = consumer.poll(0.1)  # Use a short timeout
+#     Args:
+#         consumer: The Kafka consumer instance.
+#         message_queue (asyncio.Queue): The queue to store consumed messages.
+#     """
+#     try:
+#         while True:
+#             # Poll messages from Kafka with a short timeout
+#             msg = consumer.poll(0.1)  # Use a short timeout
             
-            if msg is None:
-                # Prevent tight loop if no message is received
-                await asyncio.sleep(0.1)
-                continue
+#             if msg is None:
+#                 # Prevent tight loop if no message is received
+#                 await asyncio.sleep(0.1)
+#                 continue
             
-            if msg.error():
-                # Handle Kafka consumer errors
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    logger.info(f"End of partition reached {msg.partition()} {msg.offset()}")
-                else:
-                    logger.error(f"Consumer error: {msg.error()}")
-                continue
+#             if msg.error():
+#                 # Handle Kafka consumer errors
+#                 if msg.error().code() == KafkaError._PARTITION_EOF:
+#                     logger.info(f"End of partition reached {msg.partition()} {msg.offset()}")
+#                 else:
+#                     logger.error(f"Consumer error: {msg.error()}")
+#                 continue
             
-            # Process and decode Kafka message
-            message = msg.value().decode('utf-8')
+#             # Process and decode Kafka message
+#             message = msg.value().decode('utf-8')
 
-            # Put message to async queue
-            await message_queue.put(message)
+#             # Put message to async queue
+#             await message_queue.put(message)
 
-    except KafkaException as ke:
-        logger.error(f"Kafka error: {ke}")
-    except Exception as e:
-        logger.error(f"Unexpected error in Kafka consumer task: {e}")
-    finally:
-        # When consumer task stop, put None message to let WebSocket stop
-        await message_queue.put(None)
+#     except KafkaException as ke:
+#         logger.error(f"Kafka error: {ke}")
+#     except Exception as e:
+#         logger.error(f"Unexpected error in Kafka consumer task: {e}")
+#     finally:
+#         # When consumer task stop, put None message to let WebSocket stop
+#         await message_queue.put(None)
