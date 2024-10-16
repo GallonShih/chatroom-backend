@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: chatroom-backend
+    image: chatroom-backend:test  # Use the built image
+    ports:
+      - "8000:8000"  # Map port 8000 of the container to port 8000 on the host
+    env_file:  # Reference the .env file
+      - .env
