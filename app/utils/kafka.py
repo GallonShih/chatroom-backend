@@ -14,7 +14,7 @@ KAFKA_PRODUCER_CONFIG = {
     'linger.ms': int(os.getenv('KAFKA_LINGER_MS', 5)),
     'batch.size': int(os.getenv('KAFKA_BATCH_SIZE', 16384)),
     'compression.type': os.getenv('KAFKA_COMPRESSION_TYPE', 'gzip'),
-    'enable.idempotence': True
+    'enable.idempotence': os.getenv('KAFKA_ENABLE_IDEMPOTENCE', 'False').lower() == 'true'
 }
 
 # Kafka consumer configuration
