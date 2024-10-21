@@ -1,6 +1,7 @@
 import os
 import json
 from aiokafka import AIOKafkaConsumer
+from aiokafka.structs import TopicPartition
 from confluent_kafka import Producer, Consumer
 import asyncio
 from utils.logger import logger
@@ -25,6 +26,8 @@ KAFKA_CONSUMER_CONFIG = {
 
 # Kafka topic
 KAFKA_TOPIC = os.getenv('KAFKA_TOPIC', 'chatroom_topic')
+# Offset adjustment (default to 30 if not set in environment)
+OFFSET_ADJUSTMENT = int(os.getenv('KAFKA_OFFSET_ADJUSTMENT', 30))
 
 # Create Kafka producer
 producer = Producer(KAFKA_PRODUCER_CONFIG)
@@ -44,15 +47,9 @@ def send_to_kafka(topic: str, message: dict):
     except Exception as e:
         logger.error(f"Failed to send message to Kafka: {e}")
 
-# def create_kafka_consumer(group_id: str):
-#     consumer_config = KAFKA_CONSUMER_CONFIG.copy()
-#     consumer_config['group.id'] = group_id
-#     consumer = Consumer(consumer_config)
-#     consumer.subscribe([KAFKA_TOPIC])
-#     logger.info(f"Kafka consumer created with group_id '{group_id}' subscribed to topic '{KAFKA_TOPIC}'")
-#     return consumer
 
 async def create_aiokafka_consumer(group_id: str):
+    # Create Kafka consumer
     consumer = AIOKafkaConsumer(
         KAFKA_TOPIC,
         group_id=group_id,
@@ -60,4 +57,22 @@ async def create_aiokafka_consumer(group_id: str):
     )
     await consumer.start()
     logger.info(f"AIOKafka consumer created with group_id '{group_id}' subscribed to topic '{KAFKA_TOPIC}'")
+
+    # Get the partition information for the topic (remove await)
+    partitions = consumer.partitions_for_topic(KAFKA_TOPIC)
+    if partitions:
+        for partition in partitions:
+            tp = TopicPartition(KAFKA_TOPIC, partition)
+
+            # Get the current latest offset for the partition
+            end_offset = await consumer.end_offsets([tp])
+            latest_offset = end_offset[tp]
+
+            # Calculate the -30 offset, starting from the earliest offset if insufficient
+            seek_offset = max(latest_offset - OFFSET_ADJUSTMENT, 0)
+            logger.info(f"Seeking to offset {seek_offset} for partition {partition}")
+
+            # Seek to the calculated offset for the partition (remove await)
+            consumer.seek(tp, seek_offset)
+
     return consumer
