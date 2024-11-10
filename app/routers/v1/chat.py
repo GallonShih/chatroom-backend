@@ -22,7 +22,7 @@ def get_db():
     "/chat",
     response_model=dict,
     responses={
-        status.HTTP_201_CREATED: {
+        status.HTTP_200_OK: {
             "description": "Message stored successfully",
             "content": {
                 "application/json": {

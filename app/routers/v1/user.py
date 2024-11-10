@@ -40,7 +40,7 @@ def get_db():
                 }
             },
         },
-        status.HTTP_201_CREATED: {
+        status.HTTP_200_OK: {
             "description": "User Registered Successfully",
             "content": {
                 "application/json": {
