@@ -21,7 +21,7 @@ KAFKA_PRODUCER_CONFIG = {
 # Kafka consumer configuration
 KAFKA_CONSUMER_CONFIG = {
     'bootstrap_servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
-    'auto_offset_reset': 'latest',
+    'auto_offset_reset': 'earliest',
 }
 
 # Kafka topic
@@ -67,6 +67,7 @@ async def create_aiokafka_consumer(group_id: str):
             # Get the current latest offset for the partition
             end_offset = await consumer.end_offsets([tp])
             latest_offset = end_offset[tp]
+            logger.info(f"Latest offset for partition {partition}: {latest_offset}")
 
             # Calculate the -30 offset, starting from the earliest offset if insufficient
             seek_offset = max(latest_offset - OFFSET_ADJUSTMENT, 0)
@@ -74,5 +75,7 @@ async def create_aiokafka_consumer(group_id: str):
 
             # Seek to the calculated offset for the partition (remove await)
             consumer.seek(tp, seek_offset)
+            current_offset = await consumer.position(tp)
+            logger.info(f"Current offset for partition {partition}: {current_offset}")
 
     return consumer
