@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -8,6 +9,7 @@ from utils.logger import logger
 
 logger.info("Starting FastAPI application...")
 
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 
 # Constants for configuration
 API_PREFIX_V1 = "/api/v1"
@@ -40,7 +42,7 @@ app = FastAPI(
 # CORS middleware configuration for handling cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or specify allowed domains
+    allow_origins=cors_origins,  # Or specify allowed domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
